@@ -10,9 +10,11 @@ package internal
 import (
 	"fmt"
 	"io/ioutil"
+	"ord/utils"
 	"regexp"
 	"strings"
 	"time"
+	"github.com/360EntSecGroup-Skylar/excelize/v2"
 )
 
 type Content struct {
@@ -149,6 +151,45 @@ func ReadFileContent(filePath string) string {
 	fmt.Printf("%s 正在处理%s", time.Now().Format("2006-01-02 15:04:05"), filePath)
 	fmt.Println("")
 	return string(file)
+}
+
+func WriteExcel(locationSlice []string) {
+
+	fileName := time.Now().Format("20060102150405") + ".xlsx"
+	fmt.Println("数据处理中....")
+	f := excelize.NewFile()
+	Sheet2 := "Sheet2"
+	f.NewSheet(Sheet2)
+	f.SetCellValue(Sheet2, "C1", "HF")
+	countHF := len(locationSlice)
+	f.SetCellFormula(Sheet2, "G"+cast.ToString(countHF+2), "")
+	sumFormula := fmt.Sprintf("SUM(G2:%s)", "G"+cast.ToString(countHF+1))
+	f.SetCellFormula(Sheet2, "G"+cast.ToString(countHF+2), sumFormula)
+	//fmt.Println(hfValueMap, hfSlice)
+	for key, val := range hfSlice {
+		yAxis := cast.ToString(key + 2)
+		f.SetCellValue(Sheet2, "B"+yAxis, hfValueMap[val])
+		f.SetCellValue(Sheet2, "C"+yAxis, val)
+		formulaD := "C" + yAxis + "-C2"
+		f.SetCellFormula(Sheet2, "D"+yAxis, formulaD)
+		formulaE := "D" + yAxis + "*627.5"
+		f.SetCellFormula(Sheet2, "E"+yAxis, formulaE)
+		formulaF := "-E" + yAxis + "/(0.0019858955*298.15)"
+		f.SetCellFormula(Sheet2, "F"+yAxis, formulaF)
+		formulaG := "EXP(F" + yAxis + ")"
+		f.SetCellFormula(Sheet2, "G"+yAxis, formulaG)
+		formulaH := "G" + yAxis + "/G" + cast.ToString(countHF+2)
+		f.SetCellFormula(Sheet2, "H"+yAxis, formulaH)
+
+	}
+	f.SetActiveSheet(index)
+	if err := f.SaveAs(fileName); err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("Excel写入数据完毕...")
+	return
+
 }
 
 
