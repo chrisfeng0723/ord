@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/spf13/cast"
-
+	"github.com/shopspring/decimal"
 
 	"io/ioutil"
 	"ord/utils"
@@ -31,9 +31,9 @@ const PATH = "./data/"
 
 // 定义缓冲区
 var contentSlice = make([]Content,0)
-//var exitCh = make(chan bool, 1)
-var hfSlice = make([]string, 0)
+var hfSlice = make([]float64, 0)
 var fileNumOriginSlice = make([]string, 0)
+var hfValueMap = make(map[float64]string, 0)
 
 
 /**
@@ -106,8 +106,19 @@ func Producer() {
 		fileNumOriginSlice = append(fileNumOriginSlice, fileNumber)
 		filePath := PATH + f.Name()
 		content := ReadFileContent(filePath)
-		hfSlice = append(hfSlice, utils.GetFileHF(content))
+		//hfSlice = append(hfSlice, utils.GetFileHF(content))
 		GetOrdValueFromString(content, fileNumber)
+
+		//HF值处理
+		hfValue :=utils.GetFileHF(content)
+		r, _ := decimal.NewFromString(hfValue)
+		hfFloat, _ := r.Round(5).Float64()
+		//有重复的则直接舍弃
+		if _, ok := hfValueMap[hfFloat]; !ok {
+			//locationSlice = append(locationSlice, cast.ToInt(location))
+			hfValueMap[hfFloat] = fileNumber
+			hfSlice = append(hfSlice, hfFloat)
+		}
 	}
 	// 生产完毕之后关闭管道
 	//close(contentChannel)
@@ -191,35 +202,36 @@ func WriteExcel() {
 			fmt.Println(err)
 		}
 
-
-
 	}
-	/**
+
+
+
 	Sheet2 := "Sheet2"
+	sort.Float64s(hfSlice)
 	f.NewSheet(Sheet2)
-	f.SetCellValue(Sheet2, "C1", "HF")
-	countHF := len(locationSlice)
-	f.SetCellFormula(Sheet2, "G"+cast.ToString(countHF+2), "")
-	sumFormula := fmt.Sprintf("SUM(G2:%s)", "G"+cast.ToString(countHF+1))
-	f.SetCellFormula(Sheet2, "G"+cast.ToString(countHF+2), sumFormula)
+	f.SetCellValue(Sheet2, "B1", "HF")
+	countHF := len(fileNum)
+	f.SetCellFormula(Sheet2, "F"+cast.ToString(countHF+2), "")
+	sumFormula := fmt.Sprintf("SUM(F2:%s)", "F"+cast.ToString(countHF+1))
+	f.SetCellFormula(Sheet2, "F"+cast.ToString(countHF+2), sumFormula)
 	//fmt.Println(hfValueMap, hfSlice)
 	for key, val := range hfSlice {
 		yAxis := cast.ToString(key + 2)
-		f.SetCellValue(Sheet2, "B"+yAxis, hfValueMap[val])
-		f.SetCellValue(Sheet2, "C"+yAxis, val)
-		formulaD := "C" + yAxis + "-C2"
-		f.SetCellFormula(Sheet2, "D"+yAxis, formulaD)
-		formulaE := "D" + yAxis + "*627.5"
-		f.SetCellFormula(Sheet2, "E"+yAxis, formulaE)
-		formulaF := "-E" + yAxis + "/(0.0019858955*298.15)"
-		f.SetCellFormula(Sheet2, "F"+yAxis, formulaF)
-		formulaG := "EXP(F" + yAxis + ")"
-		f.SetCellFormula(Sheet2, "G"+yAxis, formulaG)
-		formulaH := "G" + yAxis + "/G" + cast.ToString(countHF+2)
-		f.SetCellFormula(Sheet2, "H"+yAxis, formulaH)
+		f.SetCellValue(Sheet2, "A"+yAxis, hfValueMap[val])
+		f.SetCellValue(Sheet2, "B"+yAxis, val)
+		formulaD := "B" + yAxis + "-B2"
+		f.SetCellFormula(Sheet2, "C"+yAxis, formulaD)
+		formulaE := "C" + yAxis + "*627.5"
+		f.SetCellFormula(Sheet2, "D"+yAxis, formulaE)
+		formulaF := "-D" + yAxis + "/(0.0019858955*298.15)"
+		f.SetCellFormula(Sheet2, "E"+yAxis, formulaF)
+		formulaG := "EXP(E" + yAxis + ")"
+		f.SetCellFormula(Sheet2, "F"+yAxis, formulaG)
+		formulaH := "F" + yAxis + "/F" + cast.ToString(countHF+2)
+		f.SetCellFormula(Sheet2, "G"+yAxis, formulaH)
 
 	}
-	*/
+
 	f.SetActiveSheet(index)
 	if err := f.SaveAs(fileName); err != nil {
 		fmt.Println(err)
