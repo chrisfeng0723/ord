@@ -10,7 +10,9 @@ package internal
 import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
-	//"github.com/spf13/cast"
+	"github.com/spf13/cast"
+
+
 	"io/ioutil"
 	"ord/utils"
 	"regexp"
@@ -28,10 +30,11 @@ type Content struct {
 const PATH = "./data/"
 
 // 定义缓冲区
-var contentChannel = make(chan Content, 10)
+var contentSlice = make([]Content,0)
 //var exitCh = make(chan bool, 1)
 var hfSlice = make([]string, 0)
 var fileNumOriginSlice = make([]string, 0)
+
 
 /**
 func Worker() {
@@ -89,7 +92,7 @@ func Worker() {
 
 func Worker() {
 	//contentChannel := make(chan Content, 10)
-	go Producer()
+	Producer()
 	//处理数据
 	WriteExcel()
 
@@ -104,16 +107,16 @@ func Producer() {
 		filePath := PATH + f.Name()
 		content := ReadFileContent(filePath)
 		hfSlice = append(hfSlice, utils.GetFileHF(content))
-		GetOrdValueFromString(content, contentChannel, fileNumber)
+		GetOrdValueFromString(content, fileNumber)
 	}
 	// 生产完毕之后关闭管道
-	close(contentChannel)
+	//close(contentChannel)
 	fmt.Println("生产者停止生产")
 }
 
 //Molar Mass =    620.4764 grams/mole, [Alpha] ( 6330.0 A) =      196.49 deg.
 //找出包含[Alpha]的行，并解析出（）内的内容以及 = 后面的浮点数
-func GetOrdValueFromString(content string, resultChan chan Content, fileNumber string) {
+func GetOrdValueFromString(content string, fileNumber string) {
 	lines := strings.Split(content, "\n")
 	//regex1 := `\((.*?)\)`
 	regex1 := `\((.*?)\)\s*=\s*([1-9]\d*.\d*|0.\d*[1-9]\d*)\s*deg`
@@ -128,11 +131,11 @@ func GetOrdValueFromString(content string, resultChan chan Content, fileNumber s
 				column := strings.Replace(temp[1], " ", "", -1)
 				line := strings.Replace(temp[2], "  ", "", -1)
 				fmt.Println("column: ", column, " line: ", line)
-				resultChan <- Content{
+				contentSlice = append(contentSlice,Content{
 					Key:          column,
 					Value:        line,
 					LocationFile: fileNumber,
-				}
+				})
 			}
 		}
 	}
@@ -152,13 +155,10 @@ func ReadFileContent(filePath string) string {
 
 //处理数据并写入excel
 func WriteExcel() {
-	for value := range contentChannel {
-		fmt.Println(value)
-	}
 	//文件号先去重，然后排序
+
 	singleFileNum := utils.RemoveDuplicate(fileNumOriginSlice)
 	sort.Sort(sort.Reverse(sort.StringSlice(singleFileNum)))
-	fmt.Println(singleFileNum)
 
 	fileName := time.Now().Format("20060102150405") + ".xlsx"
 	fmt.Println("数据处理中....")
@@ -168,6 +168,31 @@ func WriteExcel() {
 	for key, val := range singleFileNum {
 		coordinate, _ := excelize.CoordinatesToCellName(key+2, 1)
 		f.SetCellValue(Sheet1, coordinate, val)
+	}
+
+
+	begin :=2
+	fileNum :=utils.TransferSliceToMap(singleFileNum)
+	existKey := make(map[string]int)
+	for _,value := range contentSlice{
+		//coordinate, _ := excelize.CoordinatesToCellName()
+		var coordinate,firstColumn string
+		if location,ok :=existKey[value.Key];ok{
+			coordinate, _ = excelize.CoordinatesToCellName(fileNum[value.LocationFile]+2,location)
+		}else{
+			firstColumn = "A"+cast.ToString(begin)
+			coordinate, _ = excelize.CoordinatesToCellName(fileNum[value.LocationFile]+2,begin)
+			existKey[value.Key] = begin
+			begin++
+		}
+		err :=f.SetCellValue(Sheet1,firstColumn,value.Key)
+		err = f.SetCellValue(Sheet1,coordinate,value.Value)
+		if err !=nil{
+			fmt.Println(err)
+		}
+
+
+
 	}
 	/**
 	Sheet2 := "Sheet2"
