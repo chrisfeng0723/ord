@@ -45,8 +45,8 @@ func GetFileHF(fileContent string) string {
 
 //删除slice中的重复值
 func RemoveDuplicate(slc []string) []string {
-	result := make([]string, 0,len(slc))         //存放返回的不重复切片
-	tempMap := map[string]struct{}{} // 存放不重复主键
+	result := make([]string, 0, len(slc)) //存放返回的不重复切片
+	tempMap := map[string]struct{}{}      // 存放不重复主键
 	for _, val := range slc {
 		if _, ok := tempMap[val]; !ok {
 			tempMap[val] = struct{}{}
@@ -56,9 +56,6 @@ func RemoveDuplicate(slc []string) []string {
 	}
 	return result
 }
-
-
-
 
 //将一个slice转换成一个map,value作为key，key作为value，仅适用于值不重复的slice
 

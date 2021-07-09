@@ -7,26 +7,24 @@
  */
 package main
 
-import (
-	"fmt"
-	"io/ioutil"
-	"ord/internal"
-	"ord/utils"
-	"sort"
-)
+import "ord/internal"
 
 const PATH = "./data/"
 
 func main() {
 	//fmt.Println("hello ord")
+	/**
 	resultChan := make(chan internal.Content)
 	go Worker(resultChan)
 	for temp := range resultChan {
 		fmt.Println(temp.Key)
 	}
 	fmt.Println("finish")
-}
+	*/
+	internal.Worker()
 
+}
+/**
 func Worker(resultChan chan internal.Content) {
 	files, _ := ioutil.ReadDir(PATH)
 	fileNumOriginSlice := make([]string, 0, len(files))
@@ -56,3 +54,5 @@ func Worker(resultChan chan internal.Content) {
 	//resultMap :=make(map[string][]string)
 
 }
+
+ */
