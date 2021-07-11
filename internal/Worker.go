@@ -232,6 +232,26 @@ func WriteExcel() {
 
 	}
 
+
+	//计算最后一列的和
+	totalFileNum := len(fileNumOriginSlice)
+	for i:=2;i<begin;i++{
+		//var sumFormula string
+		sumFormulaSlice := make([]string,0)
+		for key:=range hfSlice{
+			location,_ := excelize.CoordinatesToCellName(key+2,i)
+			yAxis := cast.ToString(key + 2)
+			temp :=fmt.Sprintf("%s*Sheet2!%s",location,"G"+yAxis)
+			sumFormulaSlice = append(sumFormulaSlice,temp)
+		}
+		fmt.Println(strings.Join(sumFormulaSlice,","))
+		fmt.Println("----------++++++")
+		resultFormula :=fmt.Sprintf("SUM(%s)",strings.Join(sumFormulaSlice,","))
+		resultLocation,_ :=excelize.CoordinatesToCellName(totalFileNum+1,i)
+		fmt.Println("++++++++++++++++",resultLocation)
+		f.SetCellFormula("Sheet1",resultLocation,resultFormula)
+	}
+
 	f.SetActiveSheet(index)
 	if err := f.SaveAs(fileName); err != nil {
 		fmt.Println(err)
