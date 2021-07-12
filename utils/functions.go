@@ -18,7 +18,7 @@ import (
 //eg:
 //_-和或者_-.之间的数字
 func GetFileNumber(fileName string) string {
-	str := `[-|_]0*(\d*)[-|_|\.]`
+	str := `[-|_]0*(\d*)\.`
 	Regexp := regexp.MustCompile(str)
 	params := Regexp.FindStringSubmatch(fileName)
 	return params[1]

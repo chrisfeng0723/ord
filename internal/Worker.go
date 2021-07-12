@@ -130,7 +130,7 @@ func Producer() {
 func GetOrdValueFromString(content string, fileNumber string) {
 	lines := strings.Split(content, "\n")
 	//regex1 := `\((.*?)\)`
-	regex1 := `\((.*?)\)\s*=\s*([1-9]\d*.\d*|0.\d*[1-9]\d*)\s*deg`
+	regex1 := `\((.*?)\)\s*=\s*(-?[1-9]\d*.\d*|0.\d*[1-9]\d*)\s*deg`
 	//regex1 :=`[1-9]\d*.\d*|0.\d*[1-9]\d*`
 	reg := regexp.MustCompile(regex1)
 	for _, line := range lines {
@@ -247,7 +247,7 @@ func WriteExcel() {
 		fmt.Println(strings.Join(sumFormulaSlice,","))
 		fmt.Println("----------++++++")
 		resultFormula :=fmt.Sprintf("SUM(%s)",strings.Join(sumFormulaSlice,","))
-		resultLocation,_ :=excelize.CoordinatesToCellName(totalFileNum+1,i)
+		resultLocation,_ :=excelize.CoordinatesToCellName(totalFileNum+2,i)
 		fmt.Println("++++++++++++++++",resultLocation)
 		f.SetCellFormula("Sheet1",resultLocation,resultFormula)
 	}
